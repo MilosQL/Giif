@@ -1,0 +1,16 @@
+- `Apache Guacamole` 
+- `Ubuntu 22.04` 
+- `MariaDB`  
+- `Docker` 
+- `Git` 
+- `OpenSSH` 
+- `PPTP` 
+- `WireGuard`   
+- `Bash` 
+- `iDRAC` 
+- `Proxmox VE` 
+- `libguestfs` 
+- `SAMBA`  
+- `Nginx` 
+- `ISC DHCP` 
+- `XMLStarlet`  

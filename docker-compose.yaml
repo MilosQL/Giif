@@ -1,0 +1,71 @@
+version: "3.8"
+services:
+  guacd:
+    container_name: ${FRAMEWORK_NAME}_guacd
+    image: "guacamole/guacd:1.4.0"
+    environment: 
+      - GUACD_LOG_LEVEL=${GUACD_LOG_LEVEL}
+    restart: ${RESTART_POLICY}
+  database:
+    container_name: ${FRAMEWORK_NAME}_database
+    build: ./database
+    env_file:
+      - .env 
+    volumes:
+      - db_vol:/var/lib/mysql
+    restart: ${RESTART_POLICY}
+  guacamole:
+    container_name: ${FRAMEWORK_NAME}_guacamole
+    image: "guacamole/guacamole:1.4.0"
+    environment: 
+      - GUACD_HOSTNAME=guacd
+      - GUACD_PORT=4822
+    env_file:
+      - .env
+    depends_on:
+      - "database"
+      - "guacd"
+    restart: ${RESTART_POLICY}
+  reverse_proxy:
+    container_name: ${FRAMEWORK_NAME}_reverse_proxy
+    build: ./nginx
+    depends_on:
+      - "guacamole"
+    ports:
+      - ${PUBLIC_IP}:443:443 
+    env_file:
+      - .env
+    volumes:
+      - tls_vol:/etc/nginx/tls
+    restart: ${RESTART_POLICY}
+  samba:
+    container_name: ${FRAMEWORK_NAME}_samba
+    build:
+      context: ./samba
+    ports:
+      - ${PRIVATE_IP}:137:137/udp
+      - ${PRIVATE_IP}:138:138/udp
+      - ${PRIVATE_IP}:139:139/tcp
+      - ${PRIVATE_IP}:445:445/tcp
+    env_file:
+      - .env
+    volumes:
+      - samba_vol:/home/
+      - samba_iso_vol:/home/iso/
+      - samba_iso_vol:/home/proxmox/template/iso
+    restart: ${RESTART_POLICY}
+  core:
+    container_name: ${FRAMEWORK_NAME}_core
+    build:      
+      context: ./core
+      args:
+        - CORE_USER=${CORE_USER}
+    depends_on:
+      - "database"
+    env_file:
+      - .env
+volumes:
+  db_vol:
+  tls_vol:
+  samba_vol: 
+  samba_iso_vol: 

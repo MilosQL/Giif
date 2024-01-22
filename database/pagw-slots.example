@@ -1,0 +1,158 @@
+#!/bin/bash
+
+# This script relies on the caller's environment!
+
+# Its main objective is to populate the "pagw_slots" table in DB.
+
+# Each PAGW instance requires a separate public IP address.
+# Along with other environment variables needed by the PAGW's
+# build_and_deploy.sh script, each public IP address is recorded
+# as a separate entry in the "pagw_slots" table.
+
+# The first IP address/PAGW slot specified in this file
+# will be assigned to the so-called "default" project.
+
+# The name of the default project should adhere to the syntax 
+# of a domain label in FQDN (i.e., segments between "."):
+DEFAULT_PROJECT_NAME='Default'
+
+#######################################################
+#
+# This function creates records for the default project.
+# 
+#######################################################
+function prepare_default {
+
+  ip="$1" 	
+
+  mariadb --raw --skip-column-names -u${MYSQL_USER} -p${MYSQL_PASSWORD} -D${MYSQL_DATABASE} -e"
+   
+  START TRANSACTION;
+
+  -- Fetch the ID we expect to become default pagw_slot
+  SELECT id 
+  INTO @default_slot_id 
+  FROM pagw_slots 
+  WHERE ip='${ip}'; 
+  
+  -- The transaction will fail if the row is already present (singleton index)
+  INSERT INTO pagw_default_slot(id)
+  VALUES(@default_slot_id);
+  
+  -- Fetch the root container for all projects  
+  SELECT connection_group_id 
+  INTO @project_roof_id
+  FROM guacamole_connection_group 
+  WHERE connection_group_name='${PROJECT_CONNECTION_GROUP}';
+
+  -- Create connection_group entry for the project and save its ID
+  INSERT INTO guacamole_connection_group(parent_id, connection_group_name) 
+  VALUES (@project_roof_id, '${DEFAULT_PROJECT_NAME}');
+  SELECT LAST_INSERT_ID()
+  INTO @project_cg_id;
+
+  -- Associate PAGW slot with project's connection group
+  INSERT INTO pagw_instances(pagw_slots_id, connection_group_id)
+  VALUES (@default_slot_id, @project_cg_id);
+
+  COMMIT;
+  "
+}
+
+#######################################################
+#
+# This function loads the PAGW slots defined below.
+# 
+#######################################################
+function create_slots {
+
+  local i=1
+
+  # Fail-safe preventing clear-text PAGW_PASSWORD from being accidentally inserted into database. 
+  unset PAGW_PASSWORD
+
+  for ip in `prips ${PAGW_ADDRESS_RANGE_IN_PRIPS_FORMAT}`
+  do
+    
+   settings=$(for i in $( compgen -v | grep -E ^PAGW_ | fgrep -v PAGW_ADDRESS_RANGE_IN_PRIPS_FORMAT )
+   do
+        eval value=\"\$$i\"
+        echo -n $i'='\""$value"\"' '
+   done)
+
+   insert_command='INSERT INTO pagw_slots (ip,environment) VALUES ('"'"${ip}"'"','"'"$settings"'"');'
+
+   mariadb -u${MYSQL_USER} -p${MYSQL_PASSWORD} -D${MYSQL_DATABASE} -e"${insert_command}"
+    
+   ((PAGW_MGMT_VLAN++))
+
+   [ $((i++)) -eq 1 ] && prepare_default ${ip}
+
+  done
+}
+
+#
+# Check prips(1) for more details
+# 
+# PAGW_ADDRESS_RANGE_IN_PRIPS_FORMAT='198.51.100.10 198.51.100.110' 
+#
+# PAGW_MASK=255.255.255.0 
+# PAGW_GATEWAY=198.51.100.1 
+#
+# PAGW_HOST=10.20.30.77 
+# PAGW_HOST_USER=root 
+#
+# PAGW_HOST_HOME=/root 
+# PAGW_HOST_DOCKER_TMP=/tmp/snap-private-tmp/snap.docker/tmp 
+#
+# PAGW_SSH_PRIVKEY='-----BEGIN RSA PRIVATE KEY-----
+# MIICXQIBAAKBgQCsGiZyaugieM2dOKg+KAiJVe0oJyN2r0NG6huV8vyXG9RdbEnF
+# /pKvj6r3rRchdRXNWcig2hkT4n/NlvgOKT9Egqphp7PjQpTb+SJ4eJHeJcJ2fdi7
+# FtosVCx66iQIneqRVd12/IBFUA0SbgFkW7HAVg+4g7NuIHc0gfPkfz4VqwIDAQAB
+# AoGAQy8yMxho5owiOG4Vv64BJxvUKQieX4arzNM3UaI52QOUM6RCaHio6sA7DdUU
+# YotCp5eVKrX5dDnHioqU63JOr9wVyQnFR/+NYyI3z5KXH6ocGlvsPW7XFVw3lkBt
+# 34rJZtBuUraxPIRY92gX6DUIoRjR+4B8zbDTEwgGufhFnoECQQDZjgSKqkSkud9f
+# HGZ/et+fEvTWHmQjWlbFOR62Ms0QLreSQtN4a4spq34YbVSdhXAb1THkv9C9ehT3
+# WFY5BNi1AkEAyoPlrufSHteZBftTWZAq3IqjhB6g93TnxtspDP8pYC0GfmOxZPtm
+# M51W2GMRX92kle9lS53Rw1yBF2Xm+tIQ3wJBAMEQ95bXY/OLwF93pL6dHLbe68jZ
+# T6TQFxEPj+HBU5p42xBBncnQJr/kIRMsc1sXgFYy7QRD9csw/EpFar9PPcECQQDH
+# j6QVcEHhvKkBeQFQn71s6H1ro1cRorUHg033jbXzHUtp3smfbhDvSdubjjw/0MTw
+# LyENm65qKkzXhsZPYhPXAkB/1fjuMF+WVMJRkN5wggYv/KN7yAJ629NuiQ5Q4YX9
+# fSy0aTa4jeihOrjkBBy+Yz8bhjXFHrhttM02WTcW3ua/
+# -----END RSA PRIVATE KEY-----
+# ' 
+# PAGW_SSH_PUBKEY='ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQCsGiZyaugieM2dOKg+KAiJVe0oJyN2r0NG6huV8vyXG9RdbEnF/pKvj6r3rRchdRXNWcig2hkT4n/NlvgOKT9Egqphp7PjQpTb+SJ4eJHeJcJ2fdi7FtosVCx66iQIneqRVd12/IBFUA0SbgFkW7HAVg+4g7NuIHc0gfPkfz4Vqw== ' 
+#
+# PAGW_DEPLOY_DRIVER='proxmox-ve-ssh' 
+#
+# Single bridge used for both project-management and BMS connectivity VLANs
+# PAGW_HOST_MGMT_BRIDGE='vmbr1' 
+#
+# This is the starting VLAN number which we increment while iterating through public IP addresses!
+# PAGW_MGMT_VLAN='13' 
+#
+# PAGW_HOST_PUB_BRIDGE='vmbr2' 
+# PAGW_PUB_VLAN='11' 
+#
+# PAGW_STORAGE_POOL='local-lvm'
+#
+# Once all variables are defined, invoke the create_slots() function: 
+#
+# create_slots 
+#
+
+# If you have more than one PAGW-host of the same deployment driver,
+# you can simply introduce it by redefining the variables that have changed.
+# For example:
+#
+# PAGW_ADDRESS_RANGE_IN_PRIPS_FORMAT=
+#
+# PAGW_HOST_HOME=
+#
+# create_slots 
+#
+# If the deployment driver is different, you should undefine any driver
+# specific variables by using the "unset" command. For instance:
+#
+# unset PAGW_HOST_PUB_BRIDGE 
+# unset PAGW_PUB_VLAN 

@@ -1,0 +1,10 @@
+FROM ubuntu:22.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y mc vim nano joe sensible-utils
+
+# Due to a Guacamole-SSH scrolling bug, we're switching to mcedit
+# ENTRYPOINT ["sensible-editor"]
+
+ENTRYPOINT ["mcedit"]

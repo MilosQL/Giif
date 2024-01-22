@@ -1,0 +1,35 @@
+server {
+
+    listen reverse_proxy:443 ssl;
+
+    ssl_certificate /etc/nginx/tls/cert.crt;
+    ssl_certificate_key /etc/nginx/tls/cert.key;
+
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:MozSSL:10m;  # about 40000 sessions
+    ssl_session_tickets off;
+
+    # modern configuration
+    ssl_protocols TLSv1.3;
+    ssl_prefer_server_ciphers off;
+
+    # HSTS (ngx_http_headers_module is required) (63072000 seconds)
+    add_header Strict-Transport-Security "max-age=63072000" always;
+
+    # OCSP stapling
+    ssl_stapling on;
+    ssl_stapling_verify on;
+
+    location /guacamole/ {
+        proxy_pass http://guacamole:8080/guacamole/;
+        proxy_buffering off;
+        proxy_http_version 1.1;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # "Connection" and "Upgrade" HTTP headers are set explicitly due to the nature of the WebSocket protocol.    
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $http_connection;
+        access_log off;
+     }
+
+}
+

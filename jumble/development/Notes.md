@@ -1,0 +1,1 @@
+- Potential SQL problem arises when dealing with interactive inputs, particularly if managed by someone non-technical:  https://relentlesscoding.com/posts/sql-injection-in-bash-scripts/. 
