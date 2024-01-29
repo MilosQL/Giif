@@ -1,6 +1,6 @@
 # Giif - Guacamole-inspired infrastructure framework
 
-Relatively simple and modular IaaS framework.
+An easy-to-set-up and modular IaaS framework built on [Apache Guacamole](https://guacamole.apache.org/doc/gug/index.html).
 
 - [Giif - Guacamole-inspired infrastructure framework](#giif-guacamole-inspired-infrastructure-framework)
   - [Brief introduction](#brief-introduction)
