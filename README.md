@@ -55,7 +55,7 @@ This section describes the services provided by the framework from a user's poin
 
 ### Registration
 
-The registration process is by design decoupled from (i.e. not part of) the framework itself. Each institution or deployment can enforce its own registration policies (federated identity checks, e-mail/phone number verifications, and so on). Regardless of the methods and policies involved, the registration process has to provide a clear-cut outcome, telling the framework which users have been successfully enrolled and which should not be granted with any kind of access to it.
+The registration process is by design decoupled from (i.e., not part of) the framework itself. Each institution or deployment can enforce its own registration policies (federated identity checks, e-mail/phone number verifications, and so on). Regardless of the methods and policies involved, the registration process has to provide a clear-cut outcome, telling the framework which users have been successfully enrolled and which should not be granted with any kind of access to it.
 
 ### Post-registration workflow
 
