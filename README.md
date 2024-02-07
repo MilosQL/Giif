@@ -144,7 +144,7 @@ WireGuard is a preferable VPN option to PPTP. However, some users may find PPTP 
 
 The reservation model is fairly simple. The expiration date is only applied on the project level and cannot be overriden nor specifically given for any of the individual resources (BMS, VMs or links). When a project reaches its expiration date, a notification is dispatched to the system operators and no further action is taken. In particular, there is no such thing as the automated cleanup of the infrastructure associated with the project. This allows projects to be easily extended beyond their original expiration dates and also avoids the dangers of post-cleanup "zombies" and potential reservation conflicts.
 
-Only immediate reservations are supported; prescheduled (calendar) reservations (e.g. three months from now) are not allowed. The same rule applies for the release of individual resources. 
+Only immediate reservations are supported; prescheduled (calendar) reservations (e.g., three months from now) are not allowed. The same rule applies for the release of individual resources. 
 
 `Note:` This part of the framework is still in its early planning phase. No actual support for this has been provided yet.
 
