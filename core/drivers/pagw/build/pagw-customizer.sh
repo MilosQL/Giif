@@ -198,8 +198,8 @@ Address = 192.168.213.1/24
 # This part of the file serves as a reference
 # guide and should remain under comment.
 
-# Please note that due to proxy-ARP, the subnet
-# prefix on the clients is /23 and not /24.
+# To avoid static routing, the clients' subnet 
+# prefix is /23 instead of /24.
 
 # Each peer should get a different IP address.
 
@@ -342,7 +342,7 @@ virt-customize --add pagw.img \
                --run /root/wg-generator.sh \
                --delete /root/wg-generator.sh \
                --append-line '/etc/sysctl.conf:' \
-               --append-line '/etc/sysctl.conf:net.ipv4.conf.all.proxy_arp=1' \
+               --append-line '/etc/sysctl.conf:#net.ipv4.conf.all.proxy_arp=1' \
                --run-command "adduser --shell /home/${WG_USER}/wg.sh --disabled-password --gecos '' ${WG_USER}" \
                --run-command "usermod -aG sudo ${SUDO_USER}" \
                --ssh-inject "${WG_USER}:string:${SSH_PUBKEY}" \
