@@ -287,6 +287,8 @@ EOF
 
 ##################################################
 
+# Combining multiple "virt-customize" commands into a single one significantly improves the script's performance.
+
 virt-customize --add pagw.img \
                --run-command "dpkg-reconfigure openssh-server" \
                --run-command "adduser --disabled-password --gecos '' ${SUDO_USER}" \
