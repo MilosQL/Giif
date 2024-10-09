@@ -100,7 +100,7 @@ Currently, the following Guacamole action items are available:
   - PPTP management
   - WireGuard management
 - Resource level 
-  - VGA output (e.g. redirected display for VMs and BMS)
+  - VGA output (i.e., redirected display for VMs and BMS)
   - Dashboard (power actions, ISO manipulation and other resource specific operations)
 - Operator (super-admin) level only
   - Guacamole management
